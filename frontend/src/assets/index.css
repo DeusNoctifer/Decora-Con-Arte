@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  /* Variables de colores para Decora Con Arte */
+  --color-brand-primary: #FBD4CA; /* El verde menta del botón y subrayado */
+  --color-brand-primary-hover: #F4A694; /* Un tono más oscuro para el hover */
+  --color-brand-dark: #0f172a; /* El azul/gris muy oscuro de los textos */
+  --color-brand-light: #f3f4f6; /* El gris claro del fondo */
+}
+
+/* Opcional: Estilos base para el body */
+body {
+  background-color: var(--color-brand-light);
+  color: var(--color-brand-dark);
+}

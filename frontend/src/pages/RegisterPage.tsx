@@ -1,80 +1,96 @@
-import React, { useState } from 'react';
-import { registerUser, type RegisterData } from '../services/authService';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { InputGroup } from '../components/InputGroup';
+import { registerUser } from '../services/authService';
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState<RegisterData>({
-    email: '',
-    names: '',
-    surnames: '',
+  const [formData, setFormData] = useState({
+    nombres: '',
+    apellidos: '',
+    correo: '',
+    tel: '',
+    genero: '',
+    fechaNacimiento: '',
     password: '',
-    gender: 'O',
+    confirmPassword: ''
   });
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Las contraseñas no coinciden");
+      return;
+    }
+
+    const genderMap: { [key: string]: string } = {
+      'Masculino': 'M',
+      'Femenino': 'F',
+      'Otro': 'O'
+    };
+
+    const payload = {
+      names: formData.nombres,
+      surnames: formData.apellidos,
+      email: formData.correo,
+      tel: formData.tel,
+      gender: genderMap[formData.genero] || 'O',
+      date_of_birth: formData.fechaNacimiento,
+      password: formData.password
+    };
+
     try {
-      await registerUser(formData);
-      setMessage("¡Cuenta creada con éxito! Ya puedes iniciar sesión.");
-    } catch (err: any) {
-      setMessage(JSON.stringify(err)); // Aquí podrías mapear errores específicos
-    } finally {
-      setLoading(false);
+      const response = await registerUser(payload);
+      console.log("¡Éxito total!", response);
+      alert("¡Usuario creado exitosamente!");
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        console.error("Detalles del error en Django:", error.response.data);
+      } else {
+        console.error("Error desconocido:", error);
+        alert("Error de conexión con el servidor.");
+      }
     }
   };
 
   return (
-    
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <h2 className="text-center text-3xl font-extrabold text-gray-900">
-          Crea tu cuenta en Decora Con Arte
-        </h2>
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <input name="names" type="text" required placeholder="Nombres" 
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              onChange={handleChange} />
-            <input name="surnames" type="text" required placeholder="Apellidos" 
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              onChange={handleChange} />
-          </div>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+      <div className="bg-white p-8 md:p-12 rounded-xl shadow-lg w-full max-w-3xl">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-brand-dark border-b-4 border-brand-primary inline-block">
+            Regístrate
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputGroup name="nombres" label="Primer Nombre" placeholder="Ej: Juan" required onChange={handleChange} value={formData.nombres} />
+          <InputGroup name="apellidos" label="Primer Apellido" placeholder="Ej: Perez" required onChange={handleChange} value={formData.apellidos} />
           
-          <input name="email" type="email" required placeholder="Correo electrónico" 
-            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            onChange={handleChange} />
+          <InputGroup name="correo" label="Correo" type="email" containerClassName="md:col-span-2" placeholder='Ingresa tu correo electrónico' required onChange={handleChange} value={formData.correo} />
+          <InputGroup name="tel" label="Número" type="tel" containerClassName="md:col-span-2" placeholder='Ingresa tu número de teléfono' required onChange={handleChange} value={formData.tel} />
+          
+          <InputGroup name="genero" label="Género" isSelect options={['Femenino', 'Masculino', 'Otro']} required onChange={handleChange} value={formData.genero} />
+          <InputGroup name="fechaNacimiento" label="Fecha Nacimiento" type="date" placeholder='Ingresa tu fecha de nacimiento' required onChange={handleChange} value={formData.fechaNacimiento} />
+          
+          <InputGroup name="password" label="Contraseña" type="password" containerClassName="md:col-span-2" placeholder='Ingresa tu contraseña' required onChange={handleChange} value={formData.password} />
+          <InputGroup name="confirmPassword" label="Confirmar Contraseña" type="password" containerClassName="md:col-span-2" placeholder='Confirma tu contraseña' required onChange={handleChange} value={formData.confirmPassword} />
 
-          <input name="password" type="password" required placeholder="Contraseña" 
-            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            onChange={handleChange} />
-            
-            <div className="text-center mt-4">
-                <p className="text-sm text-gray-600">
-                    ¿Ya tienes una cuenta?{' '}
-                    <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Inicia sesión aquí
-                    </Link>
-                </p>
-            </div>
-
-          <button type="submit" disabled={loading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            {loading ? 'Cargando...' : 'Registrarse'}
-          </button>
+          <div className="md:col-span-2 mt-6 flex flex-col items-center gap-4">
+            <button type="submit" className="w-full py-3 bg-brand-primary text-white font-bold rounded-md hover:bg-opacity-90 transition-all">
+              Regístrate
+            </button>
+            <p className="text-sm">
+              ¿Ya tienes una cuenta? <Link to="/login" className="font-bold hover:underline">¡Inicia Sesión!</Link>
+            </p>
+          </div>
         </form>
-        {message && <p className="mt-2 text-center text-sm text-gray-600">{message}</p>}
       </div>
-      
     </div>
-    
   );
 };
 
