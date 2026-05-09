@@ -1,13 +1,21 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.db import models
-from django.utils import timezone
+from django.core.validators import RegexValidator, EmailValidator
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.db import models
+
+def validate_date_not_in_future(value):
+    if value > timezone.now().date():
+        raise ValidationError(_('La fecha de nacimiento no puede estar en el futuro.'))
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, names, surnames, password=None, **extra_fields):
         if not email:
             raise ValueError(_('El usuario debe tener un correo electrónico'))
-        email = self.normalize_email(email)
+        
+        email = self.normalize_email(email).lower()
+
         user = self.model(email=email, names=names, surnames=surnames, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -33,11 +41,27 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         FEMALE = 'F', _('Femenino')
         OTHER = 'O', _('Otro')
 
-    names = models.CharField(_("names"), max_length=150)
-    surnames = models.CharField(_("surnames"), max_length=150)
-    email = models.EmailField(_("correo electrónico"), unique=True)
-    tel = models.CharField(_("teléfono"), max_length=20, blank=True, null=True)
+    phone_regex = RegexValidator(
+        regex=r'^\+?1?\d{7,15}$',
+        message=_("El número de teléfono debe tener el formato: '+999999999'. Hasta 15 dígitos permitidos.")
+    )
+
+    names = models.CharField(_("nombres"), max_length=150)
+    surnames = models.CharField(_("apellidos"), max_length=150)
     
+    email = models.EmailField(
+        _("correo electrónico"), 
+        unique=True,
+        validators=[EmailValidator(message=_("Introduce un correo electrónico válido."))]
+    )
+    
+    tel = models.CharField(
+        _("teléfono"), 
+        validators=[phone_regex],
+        max_length=20, 
+        blank=True, 
+        null=True
+    )
     gender = models.CharField(
         _("género"), 
         max_length=1, 
@@ -45,7 +69,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         default=GenderChoices.OTHER
     )
     
-    date_of_birth = models.DateField(_("fecha de nacimiento"), blank=True, null=True)
+    date_of_birth = models.DateField(
+    _("fecha de nacimiento"), 
+    validators=[validate_date_not_in_future],
+    blank=True, 
+    null=True
+)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False) 
