@@ -11,6 +11,11 @@ export const registerSchema = z.object({
     "Teléfono inválido. Debe tener entre 7 y 15 dígitos."
   ),
   genero: z.string().min(1, "Selecciona un género"),
+  fechaNacimiento: z
+    .string()
+    .min(1, "La fecha de nacimiento es obligatoria")
+    .refine((val) => !isNaN(Date.parse(val)), "Fecha inválida")
+    .refine((val) => new Date(val) <= new Date(), "La fecha no puede ser futura"),
   password: z.string().min(8, "Mínimo 8 caracteres"),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
