@@ -6,12 +6,11 @@ export interface RegisterPayload {
     email: string;
     tel: string;
     gender: string;
-    birth_date: string;
+    date_of_birth: string;
     password: string;
 }
 
-export const registerUser = async (userData: any) => {
-  // Aquí ya no pones "http://localhost...", axios ya lo sabe
+export const registerUser = async (userData: RegisterPayload) => {
   const response = await api.post('auth/register/', userData);
   return response.data;
 };
