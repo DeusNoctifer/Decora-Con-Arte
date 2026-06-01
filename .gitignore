@@ -23,5 +23,6 @@ dist-ssr
 
 # Hidden files
 
+.vscode
 .venv
 .env
