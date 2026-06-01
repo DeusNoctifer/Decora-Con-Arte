@@ -1,9 +1,11 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.core.validators import RegexValidator, EmailValidator
+from django.core.validators import EmailValidator
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import models
+
+from .validators import validate_phone
 
 def validate_date_not_in_future(value):
     if value > timezone.now().date():
@@ -34,17 +36,17 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, names, surnames, password, **extra_fields)
 
 
+def phone_validator(value):
+    if value:
+        validate_phone(value)
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     
     class GenderChoices(models.TextChoices):
         MALE = 'M', _('Masculino')
         FEMALE = 'F', _('Femenino')
         OTHER = 'O', _('Otro')
-
-    phone_regex = RegexValidator(
-        regex=r'^\+?1?\d{7,15}$',
-        message=_("El número de teléfono debe tener el formato: '+999999999'. Hasta 15 dígitos permitidos.")
-    )
 
     names = models.CharField(_("nombres"), max_length=150)
     surnames = models.CharField(_("apellidos"), max_length=150)
@@ -56,10 +58,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     )
     
     tel = models.CharField(
-        _("teléfono"), 
-        validators=[phone_regex],
-        max_length=20, 
-        blank=True, 
+        _("teléfono"),
+        validators=[phone_validator],
+        max_length=20,
+        blank=True,
         null=True
     )
     gender = models.CharField(
@@ -83,6 +85,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['names', 'surnames']
 
     objects = CustomUserManager()
+
+    def clean(self):
+        super().clean()
+        if self.tel:
+            self.tel = validate_phone(self.tel)
 
     class Meta:
         db_table = 'users'

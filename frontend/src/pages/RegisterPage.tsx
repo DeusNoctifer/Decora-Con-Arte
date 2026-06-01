@@ -70,13 +70,13 @@ const RegisterPage = () => {
     };
 
     const payload = {
-      names: formData.nombres,
-      surnames: formData.apellidos,
-      email: formData.correo,
-      tel: formData.tel,
-      gender: genderMap[formData.genero] || 'O',
-      date_of_birth: formData.fechaNacimiento,
-      password: formData.password,
+      names: result.data.nombres,
+      surnames: result.data.apellidos,
+      email: result.data.correo,
+      tel: result.data.tel,
+      gender: genderMap[result.data.genero] || 'O',
+      date_of_birth: result.data.fechaNacimiento,
+      password: result.data.password,
     };
 
     try {
@@ -89,6 +89,11 @@ const RegisterPage = () => {
         if (djErr.email) newErrors.correo = djErr.email[0];
         if (djErr.names) newErrors.nombres = djErr.names[0];
         if (djErr.tel) newErrors.tel = djErr.tel[0];
+        if (djErr.password) {
+          newErrors.password = Array.isArray(djErr.password)
+            ? djErr.password.join(' ')
+            : djErr.password;
+        }
         setErrors(newErrors);
       }
     }
@@ -174,7 +179,7 @@ const RegisterPage = () => {
             type="password"
             autoComplete="new-password"
             containerClassName="md:col-span-2"
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Mín. 8 caracteres, no solo números ni muy común"
             required
             onChange={handleChange}
             value={formData.password}
